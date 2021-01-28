@@ -1,6 +1,6 @@
 {
 	"name": "68publishers/event-dispatcher-extra",
-	"description": "",
+	"description": "Extension that adds a combination of global and local event dispatchers with bridge into Nette Framework.",
 	"keywords": ["68publishers", "event", "events", "manager"],
 	"license": "MIT",
 	"authors": [
