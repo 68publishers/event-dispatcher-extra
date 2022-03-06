@@ -36,4 +36,27 @@ trait EventDispatcherAwareTrait
 
 		return $this->eventDispatcher;
 	}
+
+	/**
+	 * @param string   $eventName
+	 * @param callable $listener
+	 * @param int      $priority
+	 *
+	 * @return void
+	 */
+	public function addEventListener(string $eventName, $listener, int $priority = 0): void
+	{
+		$this->getEventDispatcher()->addListener($eventName, $listener, $priority);
+	}
+
+	/**
+	 * @param object      $event
+	 * @param string|NULL $eventName
+	 *
+	 * @return object
+	 */
+	protected function dispatchEvent(object $event, string $eventName = NULL): object
+	{
+		return $this->getEventDispatcher()->dispatch($event, $eventName);
+	}
 }
