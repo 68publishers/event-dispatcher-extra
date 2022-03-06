@@ -23,7 +23,6 @@ final class EventDispatcherExtraExtension extends CompilerExtension
 		$builder = $this->getContainerBuilder();
 
 		$builder->addDefinition($this->prefix('event_dispatcher_factory'))
-			->setAutowired(FALSE)
 			->setType(EventDispatcherFactoryInterface::class)
 			->setFactory(EventDispatcherFactory::class);
 	}
