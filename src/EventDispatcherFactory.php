@@ -7,24 +7,18 @@ namespace SixtyEightPublishers\EventDispatcherExtra;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
-final class EventDispatcherFactory implements EventDispatcherFactoryInterface
+final readonly class EventDispatcherFactory implements EventDispatcherFactoryInterface
 {
-	/** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface  */
-	private $globalEventDispatcher;
+    public function __construct(
+        private EventDispatcherInterface $globalEventDispatcher,
+    ) {
+    }
 
-	/**
-	 * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $globalEventDispatcher
-	 */
-	public function __construct(EventDispatcherInterface $globalEventDispatcher)
-	{
-		$this->globalEventDispatcher = $globalEventDispatcher;
-	}
-
-	/**
-	 * @return \Symfony\Component\EventDispatcher\EventDispatcherInterface
-	 */
-	public function create(): EventDispatcherInterface
-	{
-		return new ComposedEventDispatcher($this->globalEventDispatcher, new EventDispatcher());
-	}
+    public function create(): EventDispatcherInterface
+    {
+        return new ComposedEventDispatcher(
+            globalEventDispatcher: $this->globalEventDispatcher,
+            localEventDispatcher: new EventDispatcher(),
+        );
+    }
 }

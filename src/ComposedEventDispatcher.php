@@ -8,101 +8,98 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-final class ComposedEventDispatcher implements EventDispatcherInterface
+final readonly class ComposedEventDispatcher implements EventDispatcherInterface
 {
-	/** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface  */
-	private $globalEventDispatcher;
+    public function __construct(
+        private EventDispatcherInterface $globalEventDispatcher,
+        private EventDispatcherInterface $localEventDispatcher = new EventDispatcher(),
+    ) {
+    }
 
-	/** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface  */
-	private $localEventDispatcher;
+    public function addListener(string $eventName, callable $listener, int $priority = 0): void
+    {
+        $this->localEventDispatcher->addListener(
+            eventName: $eventName,
+            listener: $listener,
+            priority: $priority,
+        );
+    }
 
-	/**
-	 * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface      $globalEventDispatcher
-	 * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface|NULL $localEventDispatcher
-	 */
-	public function __construct(EventDispatcherInterface $globalEventDispatcher, ?EventDispatcherInterface $localEventDispatcher = NULL)
-	{
-		$this->globalEventDispatcher = $globalEventDispatcher;
-		$this->localEventDispatcher = $localEventDispatcher ?? new EventDispatcher();
-	}
+    public function addSubscriber(EventSubscriberInterface $subscriber): void
+    {
+        $this->localEventDispatcher->addSubscriber(
+            subscriber: $subscriber,
+        );
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function addListener(string $eventName, $listener, int $priority = 0): void
-	{
-		$this->localEventDispatcher->addListener($eventName, $listener, $priority);
-	}
+    public function removeListener(string $eventName, callable $listener): void
+    {
+        $this->localEventDispatcher->removeListener(
+            eventName: $eventName,
+            listener: $listener,
+        );
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function addSubscriber(EventSubscriberInterface $subscriber): void
-	{
-		$this->localEventDispatcher->addSubscriber($subscriber);
-	}
+    public function removeSubscriber(EventSubscriberInterface $subscriber): void
+    {
+        $this->localEventDispatcher->removeSubscriber(
+            subscriber: $subscriber,
+        );
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function removeListener(string $eventName, $listener): void
-	{
-		$this->localEventDispatcher->removeListener($eventName, $listener);
-	}
+    public function getListeners(?string $eventName = null): array
+    {
+        /** @var ($eventName is null ? array<string, list<callable>> : list<callable>) $global */
+        $global = $this->globalEventDispatcher->getListeners(eventName: $eventName);
+        /** @var ($eventName is null ? array<string, list<callable>> : list<callable>) $local */
+        $local = $this->localEventDispatcher->getListeners(eventName: $eventName);
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function removeSubscriber(EventSubscriberInterface $subscriber): void
-	{
-		$this->localEventDispatcher->removeSubscriber($subscriber);
-	}
+        if (null !== $eventName) {
+            return array_merge($global, $local);
+        }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function getListeners(string $eventName = NULL): array
-	{
-		$global = $this->globalEventDispatcher->getListeners($eventName);
-		$local = $this->localEventDispatcher->getListeners($eventName);
+        /**
+         * @var string         $name
+         * @var list<callable> $events
+         */
+        foreach ($global as $name => $events) {
+            if (isset($local[$name])) {
+                /** @var list<callable> $localEvents */
+                $localEvents = $local[$name];
+                $global[$name] = array_merge($events, $localEvents);
+            }
+        }
 
-		if (NULL !== $eventName) {
-			return array_merge($global, $local);
-		}
+        return $global;
+    }
 
-		foreach ($global as $name => $events) {
-			if (isset($local[$name])) {
-				$global[$name] = array_merge($events, $local[$name]);
-			}
-		}
+    public function getListenerPriority(string $eventName, callable $listener): ?int
+    {
+        return $this->globalEventDispatcher->getListenerPriority(
+            eventName: $eventName,
+            listener: $listener,
+        ) ?? $this->localEventDispatcher->getListenerPriority(
+            eventName: $eventName,
+            listener: $listener,
+        );
+    }
 
-		return $global;
-	}
+    public function hasListeners(?string $eventName = null): bool
+    {
+        return $this->globalEventDispatcher->hasListeners(eventName: $eventName) || $this->localEventDispatcher->hasListeners(eventName: $eventName);
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function getListenerPriority(string $eventName, $listener): ?int
-	{
-		return $this->globalEventDispatcher->getListenerPriority($eventName, $listener) ?? $this->localEventDispatcher->getListenerPriority($eventName, $listener);
-	}
+    public function dispatch(object $event, ?string $eventName = null): object
+    {
+        $this->globalEventDispatcher->dispatch(
+            event: $event,
+            eventName: $eventName,
+        );
+        $this->localEventDispatcher->dispatch(
+            event: $event,
+            eventName: $eventName,
+        );
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function hasListeners(string $eventName = NULL): bool
-	{
-		return $this->globalEventDispatcher->hasListeners($eventName) || $this->localEventDispatcher->hasListeners($eventName);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function dispatch(object $event, string $eventName = NULL): object
-	{
-		$this->globalEventDispatcher->dispatch($event, $eventName);
-		$this->localEventDispatcher->dispatch($event, $eventName);
-
-		return $event;
-	}
+        return $event;
+    }
 }
