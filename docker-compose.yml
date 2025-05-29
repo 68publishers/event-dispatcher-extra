@@ -1,0 +1,18 @@
+services:
+    php83:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: php83
+        container_name: 68publishers.event-dispatcher-extra.83
+        volumes:
+            - .:/var/www/html:cached
+
+    php84:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: php84
+        container_name: 68publishers.event-dispatcher-extra.84
+        volumes:
+            - .:/var/www/html:cached
