@@ -6,6 +6,8 @@ The local event dispatcher is a unique instance for each created object.
 
 ## Installation
 
+The package requires PHP 8.3 or higher and `symfony/event-dispatcher` 6.4, 7 or 8.
+
 The best way to install 68publishers/event-dispatcher-extra is using Composer:
 
 ```bash
@@ -83,7 +85,8 @@ $service2->doSomething();
 Before committing any changes, don't forget to run
 
 ```bash
-$ vendor/bin/php-cs-fixer fix --config=.php_cs.dist -v --dry-run
+$ vendor/bin/php-cs-fixer fix -v --dry-run
+$ vendor/bin/phpstan analyse
 ```
 
 and

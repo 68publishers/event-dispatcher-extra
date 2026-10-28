@@ -112,6 +112,27 @@ final class ComposedEventDispatcherTestCase extends TestCase
         Assert::same(['global_listener_1', 'global_subscriber', 'global_listener_2', 'second.baz_listener'], $secondEvent->getQueue());
     }
 
+    public function testListenersOfEventsRegisteredOnlyInLocalDispatcherShouldBeReturned(): void
+    {
+        $globalEventDispatcher = new EventDispatcher();
+        $globalEventDispatcher->addListener(self::EVENT_NAME, $globalListener = $this->createListener('global_listener'));
+
+        $composedEventDispatcher = new ComposedEventDispatcher($globalEventDispatcher, new EventDispatcher());
+        $composedEventDispatcher->addListener('local_only', $localListener = $this->createListener('local_listener'));
+
+        Assert::same([
+            self::EVENT_NAME => [
+                $globalListener,
+            ],
+            'local_only' => [
+                $localListener,
+            ],
+        ], $composedEventDispatcher->getListeners());
+
+        Assert::same([$localListener], $composedEventDispatcher->getListeners('local_only'));
+        Assert::true($composedEventDispatcher->hasListeners('local_only'));
+    }
+
     private function createEvent(): Event
     {
         return new class extends Event {
