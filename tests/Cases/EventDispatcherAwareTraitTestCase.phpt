@@ -7,6 +7,8 @@ namespace SixtyEightPublishers\EventDispatcherExtra\Tests\Cases;
 use Mockery;
 use RuntimeException;
 use SixtyEightPublishers\EventDispatcherExtra\EventDispatcherAwareTrait;
+use SixtyEightPublishers\EventDispatcherExtra\Tests\Fixture\DummyService;
+use stdClass;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Tester\Assert;
 use Tester\TestCase;
@@ -34,6 +36,21 @@ final class EventDispatcherAwareTraitTestCase extends TestCase
         Assert::throws(static function () use ($eventDispatcherAwareTrait) {
             $eventDispatcherAwareTrait->getEventDispatcher();
         }, RuntimeException::class);
+    }
+
+    public function testListenerShouldReceiveDispatchedEvent(): void
+    {
+        $service = new DummyService();
+        $service->setEventDispatcher(new EventDispatcher());
+        $event = new stdClass();
+        $received = [];
+
+        $service->addEventListener('dummy', static function (object $e) use (&$received): void {
+            $received[] = $e;
+        });
+
+        Assert::same($event, $service->dispatch($event));
+        Assert::same([$event], $received);
     }
 
     protected function tearDown(): void

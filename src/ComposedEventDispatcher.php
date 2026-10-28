@@ -60,14 +60,12 @@ final readonly class ComposedEventDispatcher implements EventDispatcherInterface
 
         /**
          * @var string         $name
-         * @var list<callable> $events
+         * @var list<callable> $localEvents
          */
-        foreach ($global as $name => $events) {
-            if (isset($local[$name])) {
-                /** @var list<callable> $localEvents */
-                $localEvents = $local[$name];
-                $global[$name] = array_merge($events, $localEvents);
-            }
+        foreach ($local as $name => $localEvents) {
+            /** @var list<callable> $globalEvents */
+            $globalEvents = $global[$name] ?? [];
+            $global[$name] = array_merge($globalEvents, $localEvents);
         }
 
         return $global;

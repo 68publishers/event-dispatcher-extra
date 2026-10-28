@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SixtyEightPublishers\EventDispatcherExtra\Bridge\Nette\DI;
 
 use Nette\DI\CompilerExtension;
-use Nette\DI\Definitions\Definition;
 use Nette\DI\Definitions\FactoryDefinition;
 use Nette\DI\Definitions\ServiceDefinition;
 use Nette\DI\Definitions\Statement;
@@ -32,7 +31,7 @@ final class EventDispatcherExtraExtension extends CompilerExtension
         # service existence check
         $builder->getByType(EventDispatcherInterface::class, true);
 
-        $definitions = array_filter($builder->getDefinitions(), static function (Definition $def): bool {
+        $definitions = array_filter($builder->getDefinitions(), static function ($def): bool {
             return is_a((string) $def->getType(), EventDispatcherAwareInterface::class, true) || ($def instanceof FactoryDefinition && is_a((string) $def->getResultType(), EventDispatcherAwareInterface::class, true));
         });
 
