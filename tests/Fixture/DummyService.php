@@ -10,4 +10,9 @@ use SixtyEightPublishers\EventDispatcherExtra\EventDispatcherAwareTrait;
 final class DummyService implements EventDispatcherAwareInterface
 {
     use EventDispatcherAwareTrait;
+
+    public function dispatch(object $event): object
+    {
+        return $this->dispatchEvent($event, 'dummy');
+    }
 }

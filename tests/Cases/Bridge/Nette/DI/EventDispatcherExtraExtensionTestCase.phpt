@@ -9,10 +9,12 @@ use Nette\DI\Container;
 use Nette\DI\Definitions\Statement;
 use SixtyEightPublishers\EventDispatcherExtra\Bridge\Nette\DI\EventDispatcherExtraExtension;
 use SixtyEightPublishers\EventDispatcherExtra\Tests\Fixture\DummyService;
+use SixtyEightPublishers\EventDispatcherExtra\Tests\Fixture\DummyServiceFactoryInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Tester\Assert;
 use Tester\TestCase;
+use function assert;
 
 require __DIR__ . '/../../../../bootstrap.php';
 
@@ -45,6 +47,37 @@ final class EventDispatcherExtraExtensionTestCase extends TestCase
         $dummyService = $container->getByType(DummyService::class);
 
         Assert::type(EventDispatcherInterface::class, $dummyService->getEventDispatcher());
+    }
+
+    public function testFactoriesAndImportedServices(): void
+    {
+        $configurator = new Configurator();
+
+        $configurator->setTempDirectory(TEMP_PATH);
+
+        $configurator->addConfig([
+            'extensions' => [
+                '68publishers.event_dispatcher_extra' => new Statement(EventDispatcherExtraExtension::class),
+            ],
+            'services' => [
+                0 => new Statement(EventDispatcher::class),
+                'factory' => [
+                    'implement' => DummyServiceFactoryInterface::class,
+                ],
+                # an imported service is skipped, it receives the dispatcher on its own
+                'imported' => [
+                    'type' => DummyService::class,
+                    'imported' => true,
+                ],
+            ],
+        ]);
+
+        $container = $configurator->createContainer();
+        $factory = $container->getByType(DummyServiceFactoryInterface::class);
+        assert($factory instanceof DummyServiceFactoryInterface);
+
+        Assert::type(EventDispatcherInterface::class, $factory->create()->getEventDispatcher());
+        Assert::false($container->isCreated('imported'));
     }
 }
 
